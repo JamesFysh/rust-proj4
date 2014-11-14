@@ -1,27 +1,71 @@
+#![crate_name="rust-proj4"]
+#![crate_type="lib"]
+#![allow(non_camel_case_types)]
+
 extern crate libc;
 
 use libc::{c_void, c_int, c_char};
 
-type projPJ = *mut c_void;
+pub type projPJ = *mut c_void;
 
 #[link(name = "proj")]
 extern {    
     fn pj_init_plus(definition: *const c_char) -> projPJ;
     fn pj_get_def(proj: projPJ, opts: c_int) -> *mut c_char;
     fn pj_is_latlong(proj: projPJ) -> c_int;
+    fn pj_is_geocent(proj: projPJ) -> c_int;
+    fn pj_free(proj: projPJ);
+    fn pj_dalloc(allocated: *mut c_char);
+    fn pj_get_release() -> *const c_char;
 }
 
+pub fn rust_pj_init_plus(definition: &str) -> projPJ {
+    unsafe {
+        pj_init_plus(definition.to_c_str().as_ptr())
+    }
+}
+
+pub fn rust_pj_get_def(proj: projPJ, opts: int) -> String {
+    unsafe {
+        let allocated = pj_get_def(proj, opts as c_int);
+        let def = std::string::raw::from_buf(allocated as *const u8);
+        pj_dalloc(allocated);
+        return def;
+    }
+}
+
+pub fn rust_pj_is_latlong(proj: projPJ) -> bool {
+    unsafe {
+        pj_is_latlong(proj) == 1
+    }
+}
+
+pub fn rust_pj_is_geocent(proj: projPJ) -> bool {
+    unsafe {
+        pj_is_geocent(proj) == 1
+    }
+}
+
+pub fn rust_pj_free(proj: projPJ) {
+    unsafe {
+        pj_free(proj)
+    }
+}
+
+pub fn rust_pj_get_release() -> String {
+    unsafe {
+        std::string::raw::from_buf(pj_get_release() as *const u8)
+    }
+}
 
 #[test]
 fn basic_test() {
-    unsafe {
-        let p = pj_init_plus("+proj=merc +ellps=clrk66 +lat_ts=33".to_c_str().as_ptr());
-        let ll = pj_init_plus("+proj=latlong +ellps=clrk66".to_c_str().as_ptr());
-        let tr: c_int = 1;
-        let fl: c_int = 0;
-        assert_eq!(pj_is_latlong(p), fl);
-        assert_eq!(pj_is_latlong(ll), tr);
-    }
+    let p = rust_pj_init_plus("+proj=merc +ellps=clrk66 +lat_ts=33");
+    let ll = rust_pj_init_plus("+proj=latlong +ellps=clrk66");
+    assert_eq!(rust_pj_is_latlong(p), false);
+    assert_eq!(rust_pj_is_latlong(ll), true);
+    rust_pj_free(p);
+    rust_pj_free(ll);
 }
 
 /*
