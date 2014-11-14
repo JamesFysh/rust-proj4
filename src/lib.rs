@@ -1,4 +1,4 @@
-#![crate_name="rust-proj4"]
+#![crate_name="proj4"]
 #![crate_type="lib"]
 #![allow(non_camel_case_types)]
 
