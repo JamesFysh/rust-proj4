@@ -19,13 +19,13 @@ extern {
     fn pj_get_release() -> *const c_char;
 }
 
-pub fn rust_pj_init_plus(definition: &str) -> projPJ {
+pub fn init_plus(definition: &str) -> projPJ {
     unsafe {
         pj_init_plus(definition.to_c_str().as_ptr())
     }
 }
 
-pub fn rust_pj_get_def(proj: projPJ, opts: int) -> String {
+pub fn get_def(proj: projPJ, opts: int) -> String {
     unsafe {
         let allocated = pj_get_def(proj, opts as c_int);
         let def = std::string::raw::from_buf(allocated as *const u8);
@@ -34,25 +34,25 @@ pub fn rust_pj_get_def(proj: projPJ, opts: int) -> String {
     }
 }
 
-pub fn rust_pj_is_latlong(proj: projPJ) -> bool {
+pub fn is_latlong(proj: projPJ) -> bool {
     unsafe {
         pj_is_latlong(proj) == 1
     }
 }
 
-pub fn rust_pj_is_geocent(proj: projPJ) -> bool {
+pub fn is_geocent(proj: projPJ) -> bool {
     unsafe {
         pj_is_geocent(proj) == 1
     }
 }
 
-pub fn rust_pj_free(proj: projPJ) {
+pub fn free(proj: projPJ) {
     unsafe {
         pj_free(proj)
     }
 }
 
-pub fn rust_pj_get_release() -> String {
+pub fn get_release() -> String {
     unsafe {
         std::string::raw::from_buf(pj_get_release() as *const u8)
     }
@@ -60,12 +60,12 @@ pub fn rust_pj_get_release() -> String {
 
 #[test]
 fn basic_test() {
-    let p = rust_pj_init_plus("+proj=merc +ellps=clrk66 +lat_ts=33");
-    let ll = rust_pj_init_plus("+proj=latlong +ellps=clrk66");
-    assert_eq!(rust_pj_is_latlong(p), false);
-    assert_eq!(rust_pj_is_latlong(ll), true);
-    rust_pj_free(p);
-    rust_pj_free(ll);
+    let p = init_plus("+proj=merc +ellps=clrk66 +lat_ts=33");
+    let ll = init_plus("+proj=latlong +ellps=clrk66");
+    assert_eq!(is_latlong(p), false);
+    assert_eq!(is_latlong(ll), true);
+    free(p);
+    free(ll);
 }
 
 /*
