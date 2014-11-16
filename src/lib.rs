@@ -37,6 +37,12 @@ pub fn init_plus(definition: &str) -> projPJ {
     }
 }
 
+pub fn transform(srcdefn: projPJ, dstdefn: projPJ, x: &mut f64, y: &mut f64) -> i32 {
+    unsafe {
+        pj_transform(srcdefn, dstdefn, 1, 1, x as *mut c_double, y as *mut c_double, 0 as *mut c_double) as i32
+    }
+}
+
 pub fn get_def(proj: projPJ, opts: int) -> String {
     unsafe {
         let allocated = pj_get_def(proj, opts as c_int);
@@ -67,6 +73,54 @@ pub fn free(proj: projPJ) {
 pub fn get_release() -> String {
     unsafe {
         std::string::raw::from_buf(pj_get_release() as *const u8)
+    }
+}
+
+pub fn get_default_ctx() -> projCtx {
+    unsafe {
+        pj_get_default_ctx()
+    }
+}
+
+pub fn get_ctx(proj: projPJ) -> projCtx {
+    unsafe {
+        pj_get_ctx(proj)
+    }
+}
+
+pub fn set_ctx(proj: projPJ, ctx: projCtx) {
+    unsafe {
+        pj_set_ctx(proj, ctx)
+    }
+}
+
+pub fn ctx_alloc() -> projCtx {
+    unsafe {
+        pj_ctx_alloc()
+    }
+}
+
+pub fn ctx_free(ctx: projCtx) {
+    unsafe {
+        pj_ctx_free(ctx)
+    }
+}
+
+pub fn ctx_get_errno(ctx: projCtx) -> i32 {
+    unsafe {
+        pj_ctx_get_errno(ctx) as i32
+    }
+}
+
+pub fn ctx_set_errno(ctx: projCtx, errno: i32) {
+    unsafe {
+        pj_ctx_set_errno(ctx, errno as c_int)
+    }
+}
+
+pub fn ctx_set_debug(ctx: projCtx, errno: i32) {
+    unsafe {
+        pj_ctx_set_debug(ctx, errno as c_int)
     }
 }
 
