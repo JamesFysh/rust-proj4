@@ -4,19 +4,31 @@
 
 extern crate libc;
 
-use libc::{c_void, c_int, c_char};
+use libc::{c_void, c_int, c_long, c_double, c_char};
 
 pub type projPJ = *mut c_void;
+pub type projCtx = *mut c_void;
 
 #[link(name = "proj")]
 extern {    
     fn pj_init_plus(definition: *const c_char) -> projPJ;
+    fn pj_transform(srcdefn: projPJ, dstdefn: projPJ, point_count: c_long, point_offset: c_int, x: *mut c_double, y: *mut c_double, z: *mut c_double) -> c_int;
     fn pj_get_def(proj: projPJ, opts: c_int) -> *mut c_char;
     fn pj_is_latlong(proj: projPJ) -> c_int;
     fn pj_is_geocent(proj: projPJ) -> c_int;
     fn pj_free(proj: projPJ);
     fn pj_dalloc(allocated: *mut c_char);
     fn pj_get_release() -> *const c_char;
+    fn pj_get_default_ctx() -> projCtx;
+    fn pj_get_ctx(proj: projPJ) -> projCtx;
+    fn pj_set_ctx(proj: projPJ, ctx: projCtx);
+    fn pj_ctx_alloc() -> projCtx;
+    fn pj_ctx_free(ctx: projCtx);
+    fn pj_ctx_get_errno(ctx: projCtx) -> c_int;
+    fn pj_ctx_set_errno(ctx: projCtx, errno: c_int);
+    fn pj_ctx_set_debug(ctx: projCtx, errno: c_int);
+    fn pj_ctx_set_app_data(ctx: projCtx, data: *mut c_void);
+    fn pj_ctx_get_app_data(ctx: projCtx) -> *mut c_void;
 }
 
 pub fn init_plus(definition: &str) -> projPJ {
