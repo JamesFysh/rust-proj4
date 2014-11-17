@@ -126,11 +126,15 @@ pub fn ctx_set_debug(ctx: projCtx, errno: i32) {
 
 #[test]
 fn basic_test() {
-    let p = init_plus("+proj=merc +ellps=clrk66 +lat_ts=33");
-    let ll = init_plus("+proj=latlong +ellps=clrk66");
-    assert_eq!(is_latlong(p), false);
+    let p1_def = " +proj=merc +ellps=clrk66 +lat_ts=33";
+    let ll_def = " +proj=latlong +ellps=clrk66";
+    let p1 = init_plus(p1_def);
+    let ll = init_plus(ll_def);
+    assert_eq!(p1_def, get_def(p1, 0i).as_slice());
+    assert_eq!(ll_def, get_def(ll, 0i).as_slice());
+    assert_eq!(is_latlong(p1), false);
     assert_eq!(is_latlong(ll), true);
-    free(p);
+    free(p1);
     free(ll);
 }
 
