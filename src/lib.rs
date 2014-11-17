@@ -9,6 +9,30 @@ use libc::{c_void, c_int, c_long, c_double, c_char};
 pub type projPJ = *mut c_void;
 pub type projCtx = *mut c_void;
 
+pub struct Projection {
+    p: projPJ
+}
+
+impl Projection {
+    pub fn new(p: projPJ) -> Projection {
+        Projection {
+            p: p
+        }
+    }
+}
+
+pub struct Context {
+    c: projCtx
+}
+
+impl Context {
+    pub fn new(c: projCtx) -> Context {
+        Context {
+            c: c
+        }
+    }
+}
+
 #[link(name = "proj")]
 extern {    
     fn pj_init_plus(definition: *const c_char) -> projPJ;
