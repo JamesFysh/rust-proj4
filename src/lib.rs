@@ -6,8 +6,8 @@ extern crate libc;
 
 use libc::{c_void, c_int, c_long, c_double, c_char};
 
-pub type projPJ = *mut c_void;
-pub type projCtx = *mut c_void;
+type projPJ = *mut c_void;
+type projCtx = *mut c_void;
 pub struct Projection(projPJ);
 pub struct Context(projCtx);
 
@@ -29,8 +29,6 @@ extern {
     fn pj_ctx_get_errno(ctx: projCtx) -> c_int;
     fn pj_ctx_set_errno(ctx: projCtx, errno: c_int);
     fn pj_ctx_set_debug(ctx: projCtx, errno: c_int);
-    fn pj_ctx_set_app_data(ctx: projCtx, data: *mut c_void);
-    fn pj_ctx_get_app_data(ctx: projCtx) -> *mut c_void;
 }
 
 impl Drop for Projection {
@@ -57,9 +55,11 @@ pub fn init_plus(definition: &str) -> Projection {
     }
 }
 
-pub fn transform(srcdefn: projPJ, dstdefn: projPJ, x: &mut f64, y: &mut f64) -> i32 {
+pub fn transform(srcdefn: &Projection, dstdefn: &Projection, x: &mut f64, y: &mut f64) -> i32 {
     unsafe {
-        pj_transform(srcdefn, dstdefn, 1, 1, x as *mut c_double, y as *mut c_double, 0 as *mut c_double) as i32
+        let &Projection(src) = srcdefn;
+        let &Projection(dst) = dstdefn;
+        pj_transform(src, dst, 1, 1, x as *mut c_double, y as *mut c_double, 0 as *mut c_double) as i32
     }
 }
 
@@ -120,21 +120,24 @@ pub fn ctx_alloc() -> Context {
     }
 }
 
-pub fn ctx_get_errno(ctx: projCtx) -> i32 {
+pub fn ctx_get_errno(ctx: &Context) -> i32 {
     unsafe {
-        pj_ctx_get_errno(ctx) as i32
+        let &Context(ct) = ctx;
+        pj_ctx_get_errno(ct) as i32
     }
 }
 
-pub fn ctx_set_errno(ctx: projCtx, errno: i32) {
+pub fn ctx_set_errno(ctx: &Context, errno: i32) {
     unsafe {
-        pj_ctx_set_errno(ctx, errno as c_int)
+        let &Context(ct) = ctx;
+        pj_ctx_set_errno(ct, errno as c_int)
     }
 }
 
-pub fn ctx_set_debug(ctx: projCtx, errno: i32) {
+pub fn ctx_set_debug(ctx: &Context, errno: i32) {
     unsafe {
-        pj_ctx_set_debug(ctx, errno as c_int)
+        let &Context(ct) = ctx;
+        pj_ctx_set_debug(ct, errno as c_int)
     }
 }
 
@@ -148,6 +151,10 @@ fn basic_test() {
     assert_eq!(ll_def, get_def(&ll, 0i).as_slice());
     assert_eq!(is_latlong(&p1), false);
     assert_eq!(is_latlong(&ll), true);
+    let mut x: f64 = 1000000.0;
+    let mut y: f64 = 1000000.0;
+    let result = transform(&p1, &ll, &mut x, &mut y);
+    assert_eq!(result, 0i32);
 }
 
 /*
