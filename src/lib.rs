@@ -8,30 +8,8 @@ use libc::{c_void, c_int, c_long, c_double, c_char};
 
 pub type projPJ = *mut c_void;
 pub type projCtx = *mut c_void;
-
-pub struct Projection {
-    p: projPJ
-}
-
-impl Projection {
-    pub fn new(p: projPJ) -> Projection {
-        Projection {
-            p: p
-        }
-    }
-}
-
-pub struct Context {
-    c: projCtx
-}
-
-impl Context {
-    pub fn new(c: projCtx) -> Context {
-        Context {
-            c: c
-        }
-    }
-}
+pub struct Projection(projPJ);
+pub struct Context(projCtx);
 
 #[link(name = "proj")]
 extern {    
@@ -55,9 +33,27 @@ extern {
     fn pj_ctx_get_app_data(ctx: projCtx) -> *mut c_void;
 }
 
-pub fn init_plus(definition: &str) -> projPJ {
+impl Drop for Projection {
+    fn drop(&mut self) {
+        unsafe {
+            let &Projection(pj) = self;
+            pj_free(pj);
+        }
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        unsafe {
+            let &Context(c) = self;
+            pj_ctx_free(c);
+        }
+    }
+}
+
+pub fn init_plus(definition: &str) -> Projection {
     unsafe {
-        pj_init_plus(definition.to_c_str().as_ptr())
+        Projection(pj_init_plus(definition.to_c_str().as_ptr()))
     }
 }
 
@@ -67,30 +63,27 @@ pub fn transform(srcdefn: projPJ, dstdefn: projPJ, x: &mut f64, y: &mut f64) -> 
     }
 }
 
-pub fn get_def(proj: projPJ, opts: int) -> String {
+pub fn get_def(proj: &Projection, opts: int) -> String {
     unsafe {
-        let allocated = pj_get_def(proj, opts as c_int);
+        let &Projection(pj) = proj;
+        let allocated = pj_get_def(pj, opts as c_int);
         let def = std::string::raw::from_buf(allocated as *const u8);
         pj_dalloc(allocated);
         return def;
     }
 }
 
-pub fn is_latlong(proj: projPJ) -> bool {
+pub fn is_latlong(proj: &Projection) -> bool {
     unsafe {
-        pj_is_latlong(proj) == 1
+        let &Projection(pj) = proj;
+        pj_is_latlong(pj) == 1
     }
 }
 
-pub fn is_geocent(proj: projPJ) -> bool {
+pub fn is_geocent(proj: &Projection) -> bool {
     unsafe {
-        pj_is_geocent(proj) == 1
-    }
-}
-
-pub fn free(proj: projPJ) {
-    unsafe {
-        pj_free(proj)
+        let &Projection(pj) = proj;
+        pj_is_geocent(pj) == 1
     }
 }
 
@@ -100,33 +93,30 @@ pub fn get_release() -> String {
     }
 }
 
-pub fn get_default_ctx() -> projCtx {
+pub fn get_default_ctx() -> Context {
     unsafe {
-        pj_get_default_ctx()
+        Context(pj_get_default_ctx())
     }
 }
 
-pub fn get_ctx(proj: projPJ) -> projCtx {
+pub fn get_ctx(proj: &Projection) -> Context {
     unsafe {
-        pj_get_ctx(proj)
+        let &Projection(pj) = proj;
+        Context(pj_get_ctx(pj))
     }
 }
 
-pub fn set_ctx(proj: projPJ, ctx: projCtx) {
+pub fn set_ctx(proj: &Projection, ctx: &Context) {
     unsafe {
-        pj_set_ctx(proj, ctx)
+        let &Projection(pj) = proj;
+        let &Context(ct) = ctx;
+        pj_set_ctx(pj, ct)
     }
 }
 
-pub fn ctx_alloc() -> projCtx {
+pub fn ctx_alloc() -> Context {
     unsafe {
-        pj_ctx_alloc()
-    }
-}
-
-pub fn ctx_free(ctx: projCtx) {
-    unsafe {
-        pj_ctx_free(ctx)
+        Context(pj_ctx_alloc())
     }
 }
 
@@ -154,12 +144,10 @@ fn basic_test() {
     let ll_def = " +proj=latlong +ellps=clrk66";
     let p1 = init_plus(p1_def);
     let ll = init_plus(ll_def);
-    assert_eq!(p1_def, get_def(p1, 0i).as_slice());
-    assert_eq!(ll_def, get_def(ll, 0i).as_slice());
-    assert_eq!(is_latlong(p1), false);
-    assert_eq!(is_latlong(ll), true);
-    free(p1);
-    free(ll);
+    assert_eq!(p1_def, get_def(&p1, 0i).as_slice());
+    assert_eq!(ll_def, get_def(&ll, 0i).as_slice());
+    assert_eq!(is_latlong(&p1), false);
+    assert_eq!(is_latlong(&ll), true);
 }
 
 /*
