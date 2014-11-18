@@ -59,7 +59,10 @@ pub fn transform(srcdefn: &Projection, dstdefn: &Projection, x: &mut f64, y: &mu
     unsafe {
         let &Projection(src) = srcdefn;
         let &Projection(dst) = dstdefn;
-        pj_transform(src, dst, 1, 1, x as *mut c_double, y as *mut c_double, 0 as *mut c_double) as i32
+        let c_x = x as *mut c_double;
+        let c_y = y as *mut c_double;
+        let c_z = 0 as *mut c_double;
+        pj_transform(src, dst, 1, 1, c_x, c_y, c_z) as i32
     }
 }
 
