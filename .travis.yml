@@ -1,1 +1,4 @@
 language: rust
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install proj-data libproj-dev
