@@ -6,7 +6,6 @@
 extern crate libc;
 
 use libc::{c_double, c_int};
-
 use ffi::*;
 
 mod ffi;
@@ -40,13 +39,25 @@ pub fn init_plus(definition: &str) -> Projection {
 }
 
 pub fn transform(srcdefn: &Projection, dstdefn: &Projection, x: &mut f64, y: &mut f64) -> i32 {
+    let &Projection(src) = srcdefn;
+    let &Projection(dst) = dstdefn;
     unsafe {
-        let &Projection(src) = srcdefn;
-        let &Projection(dst) = dstdefn;
         let c_x = x as *mut c_double;
         let c_y = y as *mut c_double;
         let c_z = 0 as *mut c_double;
         pj_transform(src, dst, 1, 1, c_x, c_y, c_z) as i32
+    }
+}
+
+pub fn transformv(srcdefn: &Projection, dstdefn: &Projection, x: &mut [f64], y: &mut [f64]) -> i32 {
+    assert!(x.len() == y.len());
+    let &Projection(src) = srcdefn;
+    let &Projection(dst) = dstdefn;
+    unsafe {
+        let c_x = x.as_ptr() as *mut c_double;
+        let c_y = y.as_ptr() as *mut c_double;
+        let c_z = 0 as *mut c_double;
+        pj_transform(src, dst, x.len() as i64, 1, c_x, c_y, c_z) as i32
     }
 }
 
@@ -142,4 +153,25 @@ fn basic_test() {
     let mut y: f64 = 1000000.0;
     let result = transform(&p1, &ll, &mut x, &mut y);
     assert_eq!(result, 0i32);
+}
+
+#[test]
+fn transform_vec() {
+    let p1_def = " +proj=merc +ellps=clrk66 +lat_ts=33";
+    let ll_def = " +proj=latlong +ellps=clrk66";
+    let p1 = init_plus(p1_def);
+    let ll = init_plus(ll_def);
+    let mut x = [0.0f64, 1_000.0, 1_000_000.0];
+    let mut y = [0.0f64, 1_000.0, 1_000_000.0];
+    let result = transformv(&p1, &ll, &mut x, &mut y);
+    assert_eq!(result, 0i32);
+}
+
+#[test]
+fn test_get_release() {
+    // Obviously we cannot expect/require a specific release, but
+    // ensure we get something that looks valid
+    let r = get_release();
+    assert!(r.len() > 0);
+    assert_eq!(r.as_slice()[0..3], "Rel");
 }
