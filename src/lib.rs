@@ -65,7 +65,7 @@ pub fn get_def(proj: &Projection, opts: int) -> String {
     unsafe {
         let &Projection(pj) = proj;
         let allocated = pj_get_def(pj, opts as c_int);
-        let def = std::string::raw::from_buf(allocated as *const u8);
+        let def = String::from_raw_buf(allocated as *const u8);
         pj_dalloc(allocated);
         return def;
     }
@@ -87,7 +87,7 @@ pub fn is_geocent(proj: &Projection) -> bool {
 
 pub fn get_release() -> String {
     unsafe {
-        std::string::raw::from_buf(pj_get_release() as *const u8)
+        String::from_raw_buf(pj_get_release() as *const u8)
     }
 }
 
